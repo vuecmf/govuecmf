@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/vuecmf/govuecmf/cmd"
 	"github.com/vuecmf/vuecmf-go/v3/app"
-	"github.com/vuecmf/vuecmf-go/v3/tools/govuecmf/cmd"
 	"os"
 	"strconv"
 	"strings"

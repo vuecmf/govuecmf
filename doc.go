@@ -3,4 +3,4 @@
 详细使用文档，请访问 http://www.vuecmf.com
 */
 
-package govuecmf // import "github.com/vuecmf/vuecmf-go/v3/tools/govuecmf"
+package main // import "github.com/vuecmf/govuecmf"

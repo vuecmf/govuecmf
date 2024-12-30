@@ -3,7 +3,7 @@ module github.com/vuecmf/govuecmf
 go 1.19
 
 require (
-	github.com/vuecmf/vuecmf-go/v3 v3.0.0
+	github.com/vuecmf/vuecmf-go/v3 v3.1.1
 	gorm.io/gorm v1.24.5
 )
 

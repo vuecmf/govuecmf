@@ -286,6 +286,7 @@ import (
 	"github.com/vuecmf/vuecmf-go/v3/app"
 	sysRoute "github.com/vuecmf/vuecmf-go/v3/app/route"
 	"log"
+    "{{.module_name}}/app/middleware"
 	"{{.module_name}}/app/route"
 )
 
@@ -298,8 +299,8 @@ func main() {
 
 	engine := gin.Default()
 
-	//注册路由
-	sysRoute.Register(engine, cfg, route.Config())
+	//注册中间件及路由
+	sysRoute.Register(engine, cfg, middleware.Middleware(), route.Config())
 
 	err := engine.Run(":" + cfg.ServerPort)
 	if err != nil {

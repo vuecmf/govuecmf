@@ -57,6 +57,12 @@ func InitProject(projectName string) {
 	}
 	fmt.Println("创建启动文件main.go完成！")
 
+	//生成docker部署文件
+	if err := createDockerFile(projectName); err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println("创建docker部署文件完成！")
+
 	//生成vuecmf模块视图
 	if err := createVuecmfView(); err != nil {
 		fmt.Println(err.Error())
@@ -312,6 +318,83 @@ func main() {
 	mainFile = strings.Replace(mainFile, "{{.module_name}}", projectName, -1)
 	if err := os.WriteFile("main.go", []byte(mainFile), 0666); err != nil {
 		return errors.New("创建启动文件main.go失败！" + err.Error())
+	}
+	return nil
+}
+
+// 创建docker文件
+func createDockerFile(projectName string) error {
+	dockerFile := `# 使用官方的Go镜像作为构建环境
+FROM golang:1.19-alpine AS builder
+
+# 设置 GOPROXY 环境变量
+ENV CGO_ENABLED 0
+ENV GOPROXY=https://goproxy.cn,direct
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN apk update --no-cache && apk add --no-cache tzdata
+
+# 设置工作目录
+WORKDIR /app
+
+# 将当前目录的内容复制到容器的工作目录中
+COPY . .
+
+# 下载所有依赖
+RUN go mod download
+
+# 构建项目
+RUN go build -o main .
+
+# 使用官方的Alpine镜像作为运行环境
+FROM alpine:latest
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装时区数据
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone && \
+    apk del tzdata
+
+# 从构建阶段复制二进制文件
+COPY --from=builder /app/main .
+
+# 确保二进制文件具有可执行权限
+RUN chmod +x /app/main
+
+# 暴露端口
+EXPOSE 8080
+
+# 运行应用
+CMD ["./main"]
+`
+	if err := os.WriteFile("Dockerfile", []byte(dockerFile), 0666); err != nil {
+		return errors.New("创建Dockerfile文件失败！" + err.Error())
+	}
+
+	dockerComposeFile := `version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    container_name: {{.project_name}}
+    volumes:
+      - /home/tulihua/myserver/config:/app/config
+      - /home/tulihua/myserver/static:/app/static
+      - /home/tulihua/myserver/uploads:/app/uploads
+      - /home/tulihua/myserver/views:/app/views
+    command: ["/app/main"]
+    restart: unless-stopped
+
+`
+	dockerComposeFile = strings.Replace(dockerComposeFile, "{{.project_name}}", projectName, -1)
+	if err := os.WriteFile("docker-compose.yml", []byte(dockerComposeFile), 0666); err != nil {
+		return errors.New("创建docker-compose.yml失败！" + err.Error())
 	}
 	return nil
 }
